@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SymptomAIze</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header__inner">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="./index.html" class="nav-link">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="./baymax.html" class="nav-link">Baymax</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="./find.html" class="nav-link">Поиск</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="./message.html" class="nav-link">Сообщения</a>
+                    </li>
+                </ul>
+                <div class="header-profile">
+                    <div class="header-username">Алихан</div>
+                    <div class="header-logo"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <section class="chat-baymax">
+        <div class="chat-logo">
+            <img src="./imgs/logo.png" alt="" class="chat-logo-img">
+            <h1 class="chat-logo-name">SymptomAIze</h1>
+            <div class="plus">Plus</div>
+        </div>
+        <div class="chat-text" id="chat-text"></div>
+        <label class="chat-input">
+            <img src="./imgs/voice-mail--mic-audio-mike-music-microphone.svg" alt="" class="input-voice input-icon">
+            <input type="text" id="symptoms-input" class="input-text" placeholder="Введите симптомы">
+            <img src="./imgs/mail-send-email-message--send-email-paper-airplane-deliver.svg" alt="" class="input-submit" id="submit-btn">
+        </label>
+    </section>
+    <!-- hey as-->
+    <script>
+        const chatText = document.getElementById('chat-text');
+        const recognitionButton = document.querySelector('.input-voice');
+        
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ru-RU';
+            recognition.interimResults = false;
+
+            recognition.onresult = async (event) => {
+                const symptoms = event.results[0][0].transcript;
+                console.log('Распознанные симптомы:', symptoms);
+
+                if (symptoms) {
+                    try {
+                        const response = await fetch('http://localhost:3000/get-symptoms-analysis', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ symptoms: symptoms })
+                        });
+
+                        const data = await response.json();
+                        console.log('Ответ сервера:', data);
+
+                        if (data.analysis) {
+                            chatText.innerHTML = `<p><strong>Вы ввели:</strong> ${symptoms}</p><p><strong>Возможные заболевания:</strong> ${data.analysis}</p>`;
+                            const utterance = new SpeechSynthesisUtterance(data.analysis);
+                            utterance.rate = 2;
+                            utterance.lang = 'ru-RU'; 
+
+                            speechSynthesis.speak(utterance);
+                        } else {
+                            chatText.innerHTML = `<p>Ошибка: ${data.error || 'Невозможно получить данные'}</p>`;
+                        }
+                    } catch (error) {
+                        chatText.innerHTML = `<p>Ошибка при отправке запроса: ${error.message}</p>`;
+                    }
+                } else {
+                    chatText.innerHTML = `<p>Пожалуйста, введите симптомы.</p>`;
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Ошибка распознавания:', event.error);
+            };
+
+            recognitionButton.addEventListener('click', () => {
+                recognition.start(); 
+                chatText.innerHTML = `<p>Идет запись...</p>`;
+            });
+
+        } else {
+            chatText.innerHTML = `<p>Ваш браузер не поддерживает Web Speech API. Попробуйте использовать Google Chrome.</p>`;
+        }
+
+        document.getElementById('submit-btn').addEventListener('click', async function () {
+            const symptoms = document.getElementById('symptoms-input').value;
+            const chatText = document.getElementById('chat-text');
+    
+            if (symptoms) {
+                try {
+                    const response = await fetch('http://localhost:3000/get-symptoms-analysis', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ symptoms: symptoms })
+                    });
+    
+                    const data = await response.json();
+                    console.log('Server response:', data);
+
+                    if (data.analysis) {
+                        chatText.innerHTML = `<p><strong>Вы ввели:</strong> ${symptoms}</p><p><strong>Возможные заболевания:</strong> ${data.analysis}</p>`;
+                        const utterance = new SpeechSynthesisUtterance(data.analysis);
+                        utterance.rate = 2;
+                        utterance.lang = 'ru-RU';
+
+                        speechSynthesis.speak(utterance);
+                    } else {
+                        chatText.innerHTML = `<p>Ошибка: ${data.error || 'Невозможно получить данные'}</p>`;
+                    }
+                } catch (error) {
+                    chatText.innerHTML = `<p>Ошибка при отправке запроса: ${error.message}</p>`;
+                }
+            } else {
+                chatText.innerHTML = `<p>Пожалуйста, введите симптомы.</p>`;
+            }
+        });
+    </script>
+    
+</body>
+</html>
