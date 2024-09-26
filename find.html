@@ -33,76 +33,65 @@
     </header>
     <main class="main">
         <div class="container">
-            <h1 class="main-header">Как я могу вам сегодня помочь?</h1>
-            <div class="main-grid">
-                <a href="./baymax.html" class="main__btn first">
-                    <div class="main__btn-icons">
-                        <img src="./imgs/baymax.svg" alt="" class="btn-icon">
-                        <img src="./imgs/arrow.svg" alt="" class="arrow">
-                    </div>
-                    <h2 class="main__btn-header">Чат с <br> Baymax</h2>
-                </a>
-                <a href="#" class="main__btn second">
-                    <div class="main__btn-icons">
-                        <img src="./imgs/message.svg" alt="" class="btn-icon">
-                        <img src="./imgs/arrow.svg" alt="" class="arrow">
-                    </div>
-                    <h2 class="main__btn-header">Чат с Доктором</h2>
-                </a>
-                <a href="#" class="main__btn third">
-                    <div class="main__btn-icons">
-                        <img src="./imgs/picture.svg" alt="" class="btn-icon">
-                        <img src="./imgs/arrow.svg" alt="" class="arrow">
-                    </div>
-                    <h2 class="main__btn-header">Поиск лекарств</h2>
-                </a>
-            </div>
-            <div class="main-bg">
-                <img src="./imgs/baymax-2svg.svg" alt="" class="main-bg-icon">
-            </div>
-            <section class="history">
-                <div class="history-head">
-                    <h2 class="history-header">History</h2>
-                    <p class="history-btn">see all</p>
+            <div class="find__inner">
+                <h2>Найти ближайшие аптеки</h2>
+                <div class="input-container">
+                    <button id="getLocation">Получить координаты</button>
+                    <p id="coords"></p>
+                    <button id="findPharmacies">Найти аптеки</button>
                 </div>
-                <div class="history-cards">
-                    <div class="history-card">
-                        <div class="history-card-logo first">
-                            <img src="./imgs/baymax.svg" alt="" class="history-card-img">
-                        </div>
-                        <p class="history-card-text">Что делать если слишком сильно кашляю?</p>
-                        <div></div>
-                    </div>
-                    <div class="history-card">
-                        <div class="history-card-logo second">
-                            <img src="./imgs/message.svg" alt="" class="history-card-img">
-                        </div>
-                        <p class="history-card-text">Как можно записаться на прием</p>
-                        <div></div>
-                    </div>
-                    <div class="history-card">
-                        <div class="history-card-logo third">
-                            <img src="./imgs/picture.svg" alt="" class="history-card-img">
-                        </div>
-                        <p class="history-card-text">Что делать если слишком сильно кашляю?</p>
-                        <div></div>
-                    </div>
-                    <div class="history-card">
-                        <div class="history-card-logo first">
-                            <img src="./imgs/baymax.svg" alt="" class="history-card-img">
-                        </div>
-                        <p class="history-card-text">Что делать если слишком сильно кашляю?</p>
-                        <div></div>
-                    </div>
-                </div>
-            </section>
+                <h3>Результаты:</h3>
+                <ul id="pharmacyList"></ul>
         </div>
     </main>
-    <footer class="footer">
-        <h1 class="footer-header">Contact us</h1>
-        <p class="footer-text">+7-702-432-3412</p>
-        <p class="footer-text">+7-778-621-7438</p>
-        <p class="footer-text">Made with love by Alikhan and Nurkeldi</p>
-    </footer>
+    <script>
+        let latitude = null;
+        let longitude = null;
+
+        // Функция для получения координат пользователя
+        document.getElementById('getLocation').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    latitude = position.coords.latitude;
+                    longitude = position.coords.longitude;
+                    document.getElementById('coords').textContent = `Широта: ${latitude}, Долгота: ${longitude}`;
+                }, (error) => {
+                    console.error('Ошибка получения местоположения:', error);
+                    alert('Не удалось получить местоположение. Пожалуйста, проверьте настройки браузера.');
+                });
+            } else {
+                alert('Ваш браузер не поддерживает геолокацию.');
+            }
+        });
+
+        document.getElementById('findPharmacies').addEventListener('click', async () => {
+            if (latitude === null || longitude === null) {
+                alert('Сначала получите координаты пользователя.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/find-pharmacies', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ latitude, longitude }),
+                });
+
+                const pharmacies = await response.json();
+                const pharmacyList = document.getElementById('pharmacyList');
+                pharmacyList.innerHTML = '';
+
+                pharmacies.forEach(pharmacy => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${pharmacy.name} (Широта: ${pharmacy.lat}, Долгота: ${pharmacy.lon})`;
+                    pharmacyList.appendChild(listItem);
+                });
+            } catch (error) {
+                console.error('Ошибка при поиске аптек:', error);
+            }
+        });
+    </script>
 </body>
 </html>

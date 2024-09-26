@@ -38,6 +38,27 @@ app.post('/get-symptoms-analysis', async (req, res) => {
     
 });
 
+app.post('/find-pharmacies', async (req, res) => {
+    const { latitude, longitude } = req.body;
+    const radius = 1000; // Радиус в метрах для поиска аптек
+
+    try {
+        const overpassUrl = `https://overpass-api.de/api/interpreter?data=[out:json];(node["amenity"="pharmacy"](around:${radius},${latitude},${longitude}););out;`;
+        const response = await axios.get(overpassUrl);
+        const pharmacies = response.data.elements.map(pharmacy => ({
+            name: pharmacy.tags.name || 'Без названия',
+            lat: pharmacy.lat,
+            lon: pharmacy.lon,
+        }));
+
+        res.json(pharmacies);
+    } catch (error) {
+        console.error('Ошибка при получении аптек:', error.message);
+        res.status(500).json({ error: 'Не удалось найти аптеки.' });
+    }
+});
+
+
 app.listen(port, () => {
     console.log(`Сервер запущен на http://localhost:${port}`);
 });
