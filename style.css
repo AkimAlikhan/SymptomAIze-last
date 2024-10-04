@@ -331,7 +331,6 @@ ul{
     height: 70%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     align-items: center;
 }
 
@@ -339,7 +338,7 @@ ul{
     display: flex;
     gap:10px;
     align-items: center;
-    margin-bottom: 100px;
+    margin-bottom: 30px;
 }
 .chat-text{
     font-size: 18px;

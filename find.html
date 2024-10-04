@@ -48,7 +48,6 @@
         let latitude = null;
         let longitude = null;
 
-        // Функция для получения координат пользователя
         document.getElementById('getLocation').addEventListener('click', () => {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {

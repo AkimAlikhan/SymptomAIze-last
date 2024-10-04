@@ -49,7 +49,7 @@
     <script>
         const chatText = document.getElementById('chat-text');
         const recognitionButton = document.querySelector('.input-voice');
-        
+
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         if (SpeechRecognition) {
@@ -62,31 +62,7 @@
                 console.log('Распознанные симптомы:', symptoms);
 
                 if (symptoms) {
-                    try {
-                        const response = await fetch('http://localhost:3000/get-symptoms-analysis', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ symptoms: symptoms })
-                        });
-
-                        const data = await response.json();
-                        console.log('Ответ сервера:', data);
-
-                        if (data.analysis) {
-                            chatText.innerHTML = `<p><strong>Вы ввели:</strong> ${symptoms}</p><p><strong>Возможные заболевания:</strong> ${data.analysis}</p>`;
-                            const utterance = new SpeechSynthesisUtterance(data.analysis);
-                            utterance.rate = 2;
-                            utterance.lang = 'ru-RU'; 
-
-                            speechSynthesis.speak(utterance);
-                        } else {
-                            chatText.innerHTML = `<p>Ошибка: ${data.error || 'Невозможно получить данные'}</p>`;
-                        }
-                    } catch (error) {
-                        chatText.innerHTML = `<p>Ошибка при отправке запроса: ${error.message}</p>`;
-                    }
+                    await processSymptoms(symptoms);
                 } else {
                     chatText.innerHTML = `<p>Пожалуйста, введите симптомы.</p>`;
                 }
@@ -97,48 +73,112 @@
             };
 
             recognitionButton.addEventListener('click', () => {
-                recognition.start(); 
+                recognition.start();
                 chatText.innerHTML = `<p>Идет запись...</p>`;
             });
-
         } else {
             chatText.innerHTML = `<p>Ваш браузер не поддерживает Web Speech API. Попробуйте использовать Google Chrome.</p>`;
         }
 
         document.getElementById('submit-btn').addEventListener('click', async function () {
             const symptoms = document.getElementById('symptoms-input').value;
-            const chatText = document.getElementById('chat-text');
-    
+
             if (symptoms) {
-                try {
-                    const response = await fetch('http://localhost:3000/get-symptoms-analysis', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ symptoms: symptoms })
-                    });
-    
-                    const data = await response.json();
-                    console.log('Server response:', data);
-
-                    if (data.analysis) {
-                        chatText.innerHTML = `<p><strong>Вы ввели:</strong> ${symptoms}</p><p><strong>Возможные заболевания:</strong> ${data.analysis}</p>`;
-                        const utterance = new SpeechSynthesisUtterance(data.analysis);
-                        utterance.rate = 2;
-                        utterance.lang = 'ru-RU';
-
-                        speechSynthesis.speak(utterance);
-                    } else {
-                        chatText.innerHTML = `<p>Ошибка: ${data.error || 'Невозможно получить данные'}</p>`;
-                    }
-                } catch (error) {
-                    chatText.innerHTML = `<p>Ошибка при отправке запроса: ${error.message}</p>`;
-                }
+                await processSymptoms(symptoms);
             } else {
                 chatText.innerHTML = `<p>Пожалуйста, введите симптомы.</p>`;
             }
         });
+
+        async function processSymptoms(symptoms) {
+            try {
+                const response = await fetch('http://localhost:3000/get-symptoms-analysis', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ symptoms: symptoms })
+                });
+
+                const data = await response.json();
+                console.log('Ответ сервера:', data);
+
+                if (data.analysis) {
+                    chatText.innerHTML = `<p><strong>Вы ввели:</strong> ${symptoms}</p><p><strong>Возможные заболевания:</strong> ${data.analysis}</p>`;
+                    const utterance = new SpeechSynthesisUtterance(data.analysis);
+                    utterance.rate = 2;
+                    utterance.lang = 'ru-RU';
+                    speechSynthesis.speak(utterance);
+
+                    // Получение возможного заболевания
+                    const responseDisease = await fetch('http://localhost:3000/get-disease', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ symptoms: symptoms })
+                    });
+
+                    const dataDisease = await responseDisease.json();
+                    console.log(dataDisease)
+                    const disease = dataDisease.disease;
+
+                    // Получение лекарств
+                    const responseDrug = await fetch('http://localhost:3000/find-drugs', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ disease: disease })
+                    });
+
+                    const dataDrug = await responseDrug.json();
+
+                    if (dataDrug.drugs && dataDrug.drugs.length > 0) {
+                        // Обновленный код, который вызывает OpenAI API для преобразования лекарства
+                        dataDrug.drugs.forEach(async drug => {
+                            try {
+                                // Отправляем запрос к нашему серверу для получения более знакомой версии лекарства
+                                const familiarDrugResponse = await fetch('http://localhost:3000/get-familiar-drug', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ drug: drug.drug })
+                                });
+
+                                const familiarDrugData = await familiarDrugResponse.json();
+                                
+                                if (familiarDrugData.familiar_version) {
+                                    // Выводим более знакомую версию лекарства
+                                    const p = document.createElement('p');
+                                    p.innerHTML = `Лекарство: <strong>${familiarDrugData.familiar_version}</strong>,  Реакция: ${drug.reaction}`;
+                                    chatText.appendChild(p);
+                                } else {
+                                    const p = document.createElement('p');
+                                    p.innerHTML = `Лекарство: <strong>${drug.drug}</strong>,  Реакция: ${drug.reaction}`;
+                                    chatText.appendChild(p);
+                                }
+                            } catch (error) {
+                                console.error('Ошибка при получении знакомой версии лекарства:', error);
+                                const p = document.createElement('p');
+                                p.innerHTML = `Ошибка при обработке лекарства <strong>${drug.drug}</strong>. Реакция: ${drug.reaction}`;
+                                chatText.appendChild(p);
+                            }
+                        });
+
+                    } else {
+                        const p = document.createElement('p');
+                        p.textContent = 'Лекарства не найдены.';
+                        chatText.appendChild(p);
+                    }
+                } else {
+                    chatText.innerHTML = `<p>Ошибка: ${data.error || 'Невозможно получить данные'}</p>`;
+                }
+            } catch (error) {
+                chatText.innerHTML = `<p>Ошибка при отправке запроса: ${error.message}</p>`;
+            }
+        }
     </script>
     
 </body>
