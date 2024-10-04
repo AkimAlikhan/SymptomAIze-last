@@ -116,6 +116,7 @@ app.post('/get-disease', async (req, res) => {
 
 app.post('/get-familiar-drug', async (req, res) => {
     const { drug } = req.body;
+    console.log(`Запрос на получение знакомого лекарства: ${drug}`); // Логирование входных данных
     try {
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
@@ -141,6 +142,36 @@ app.post('/get-familiar-drug', async (req, res) => {
         res.status(500).json({ error: 'Не удалось преобразовать название лекарства.' });
     }
 });
+
+
+app.post('/translate', async (req, res) => {
+    const { text } = req.body;
+    try {
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-4o',
+                messages: [
+                    { role: 'system', content: 'Вы переводчик. Переведите следующий текст на русский язык.' },
+                    { role: 'user', content: text }
+                ],
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+
+        const translatedText = response.data.choices[0].message.content.trim();
+        res.json({ translated_text: translatedText });
+    } catch (error) {
+        console.error('Ошибка при переводе текста:', error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Не удалось выполнить перевод.' });
+    }
+});
+
 
 
 app.listen(port, () => {

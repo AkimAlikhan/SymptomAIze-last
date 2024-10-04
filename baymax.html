@@ -148,11 +148,21 @@
                                 });
 
                                 const familiarDrugData = await familiarDrugResponse.json();
-                                
+
+                                const familiarTranslationResponse = await fetch('http://localhost:3000/translate', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ text: drug.reaction })
+                                });
+
+                                const familiarTranslationData = await familiarTranslationResponse.json();
+
                                 if (familiarDrugData.familiar_version) {
                                     // Выводим более знакомую версию лекарства
                                     const p = document.createElement('p');
-                                    p.innerHTML = `Лекарство: <strong>${familiarDrugData.familiar_version}</strong>,  Реакция: ${drug.reaction}`;
+                                    p.innerHTML = `Лекарство: <strong>${familiarDrugData.familiar_version}</strong>,  Реакция: ${familiarTranslationData.translated_text}`;
                                     chatText.appendChild(p);
                                 } else {
                                     const p = document.createElement('p');
