@@ -110,7 +110,6 @@
                     utterance.lang = 'ru-RU';
                     speechSynthesis.speak(utterance);
 
-                    // Получение возможного заболевания
                     const responseDisease = await fetch('http://localhost:3000/get-disease', {
                         method: 'POST',
                         headers: {
@@ -135,10 +134,9 @@
                     const dataDrug = await responseDrug.json();
 
                     if (dataDrug.drugs && dataDrug.drugs.length > 0) {
-                        // Обновленный код, который вызывает OpenAI API для преобразования лекарства
                         dataDrug.drugs.forEach(async drug => {
                             try {
-                                // Отправляем запрос к нашему серверу для получения более знакомой версии лекарства
+                                console.log(drug)
                                 const familiarDrugResponse = await fetch('http://localhost:3000/get-familiar-drug', {
                                     method: 'POST',
                                     headers: {
@@ -160,7 +158,6 @@
                                 const familiarTranslationData = await familiarTranslationResponse.json();
 
                                 if (familiarDrugData.familiar_version) {
-                                    // Выводим более знакомую версию лекарства
                                     const p = document.createElement('p');
                                     p.innerHTML = `Лекарство: <strong>${familiarDrugData.familiar_version}</strong>,  Реакция: ${familiarTranslationData.translated_text}`;
                                     chatText.appendChild(p);

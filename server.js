@@ -18,7 +18,7 @@ app.post('/find-drugs', async (req, res) => {
         const response = await axios.get(`https://api.fda.gov/drug/event.json`, {
             params: {
                 search: `patient.drug.drugindication:"${disease}"`,
-                limit: 10  // Установите лимит результатов (например, 10)
+                limit: 5  // Установите лимит результатов (например, 10)
             }
         });
 
