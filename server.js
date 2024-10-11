@@ -10,6 +10,14 @@ app.use(cors());
 
 require('dotenv').config();
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  });
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  });
+
 app.post('/find-drugs', async (req, res) => {
     const { disease } = req.body;
 
