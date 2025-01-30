@@ -92,7 +92,7 @@
 
         async function processSymptoms(symptoms) {
             try {
-                const response = await fetch('http://localhost:3000/get-symptoms-analysis', {
+                const response = await fetch('https://symptomaize-ea0onzhmq-alikhans-projects-f1564e51.vercel.app/get-symptoms-analysis', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -110,7 +110,7 @@
                     utterance.lang = 'ru-RU';
                     speechSynthesis.speak(utterance);
 
-                    const responseDisease = await fetch('http://localhost:3000/get-disease', {
+                    const responseDisease = await fetch('https://symptomaize-ea0onzhmq-alikhans-projects-f1564e51.vercel.app/get-disease', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -123,7 +123,7 @@
                     const disease = dataDisease.disease;
 
                     // Получение лекарств
-                    const responseDrug = await fetch('http://localhost:3000/find-drugs', {
+                    const responseDrug = await fetch('https://symptomaize-ea0onzhmq-alikhans-projects-f1564e51.vercel.app/find-drugs', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -137,7 +137,7 @@
                         dataDrug.drugs.forEach(async drug => {
                             try {
                                 console.log(drug)
-                                const familiarDrugResponse = await fetch('http://localhost:3000/get-familiar-drug', {
+                                const familiarDrugResponse = await fetch('https://symptomaize-ea0onzhmq-alikhans-projects-f1564e51.vercel.app/get-familiar-drug', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -147,7 +147,7 @@
 
                                 const familiarDrugData = await familiarDrugResponse.json();
 
-                                const familiarTranslationResponse = await fetch('http://localhost:3000/translate', {
+                                const familiarTranslationResponse = await fetch('https://symptomaize-ea0onzhmq-alikhans-projects-f1564e51.vercel.app/translate', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
